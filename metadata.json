@@ -1,0 +1,5 @@
+{
+  "name": "BabyKicks -胎动计数器",
+  "description": "A comprehensive fetal movement counter with trend analysis, medical insights, and anomaly detection using Gemini AI.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BabyKicks Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+      body {
+        font-family: 'Nunito', sans-serif;
+        background-color: #f8fafc; /* Slate-50 */
+      }
+      /* Custom scrollbar for cleaner look */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #e2e8f0; /* Slate-200 */
+        border-radius: 10px;
+      }
+      .safe-area-pb {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      
+      @keyframes subtle-pulse {
+        0%, 100% { box-shadow: 0 0 0 0px rgba(244, 114, 182, 0.0); transform: scale(1); }
+        50% { box-shadow: 0 0 0 4px rgba(244, 114, 182, 0.2); transform: scale(1.005); }
+      }
+      .animate-subtle-pulse {
+        animation: subtle-pulse 2.5s ease-in-out infinite;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "date-fns": "https://aistudiocdn.com/date-fns@^4.1.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "recharts": "https://aistudiocdn.com/recharts@^3.4.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
