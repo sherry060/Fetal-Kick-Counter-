@@ -147,6 +147,13 @@ export const TRANSLATIONS = {
     syncNow: "Sign in to Sync",
     logout: "Log Out",
     loggingIn: "Signing in...",
+    syncing: "Syncing data...",
+    dataSynced: "Data Synced",
+    cloudBackup: "Cloud Backup Active",
+    lastSync: "Last synced just now",
+    anomalyLowMessage: "Movement count is lower than your average or medical guidelines.",
+    anomalyHighMessage: "Movement frequency is unusually high compared to typical patterns.",
+    anomalyGeneric: "Pattern deviates from your history."
   },
   zh: {
     welcome: "欢迎使用胎动计数器",
@@ -223,5 +230,12 @@ export const TRANSLATIONS = {
     syncNow: "点击登陆以同步数据",
     logout: "退出登陆",
     loggingIn: "正在登陆...",
+    syncing: "正在同步数据...",
+    dataSynced: "数据已同步",
+    cloudBackup: "云端备份已开启",
+    lastSync: "刚刚已同步",
+    anomalyLowMessage: "检测到胎动次数偏少，建议稍作休息后再次测量或咨询医生。",
+    anomalyHighMessage: "检测到胎动过于频繁，建议持续关注胎动变化。",
+    anomalyGeneric: "胎动模式与往常不同，请留意。"
   }
 };

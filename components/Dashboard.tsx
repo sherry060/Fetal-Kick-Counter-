@@ -93,6 +93,13 @@ const Dashboard: React.FC<Props> = ({
       return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Helper to get localized anomaly text
+  const getAnomalyText = (status?: string) => {
+      if (status === 'low' || status === 'medium') return t.anomalyLowMessage;
+      if (status === 'high') return t.anomalyHighMessage;
+      return t.anomalyGeneric;
+  };
+
   return (
     <div className="space-y-5 p-4 pb-32">
       {/* Header Card - Softer Gradient */}
@@ -236,10 +243,11 @@ const Dashboard: React.FC<Props> = ({
                       </div>
                     </div>
                     
-                    {isAnomaly && session.anomalyReason && (
+                    {isAnomaly && (
                         <div className="bg-pink-50 border border-pink-100 rounded-lg p-3 text-sm text-pink-700 animate-subtle-pulse mx-1">
                             <p className="font-bold text-xs mb-1">{t.anomalyReason}</p>
-                            <p className="whitespace-pre-line leading-relaxed text-xs">{session.anomalyReason}</p>
+                            {/* Use dynamic text based on status, not the stored string */}
+                            <p className="whitespace-pre-line leading-relaxed text-xs">{getAnomalyText(session.anomalyStatus)}</p>
                             <p className="mt-2 text-[10px] opacity-60 border-t border-pink-200 pt-1">{t.aiDisclaimer}</p>
                         </div>
                     )}

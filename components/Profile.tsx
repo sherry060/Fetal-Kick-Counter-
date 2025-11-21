@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserProfile, TIMEZONES, TRANSLATIONS, Language } from '../types';
-import { Save, User, Calendar, Globe, Languages, Check, AlertTriangle, LogOut, LogIn } from 'lucide-react';
+import { Save, User, Calendar, Globe, Languages, Check, AlertTriangle, LogOut, LogIn, Cloud } from 'lucide-react';
 import { mockGoogleLogin, mockLogout } from '../services/authService';
 
 interface Props {
   profile: UserProfile;
-  onUpdate: (profile: UserProfile) => void;
+  onUpdate: (profile: UserProfile) => Promise<void>;
 }
 
 const Profile: React.FC<Props> = ({ profile, onUpdate }) => {
@@ -28,8 +28,8 @@ const Profile: React.FC<Props> = ({ profile, onUpdate }) => {
   const t = TRANSLATIONS[language];
   const isGuest = !profile.account || profile.account.provider === 'guest';
 
-  const handleSave = () => {
-    onUpdate({ ...profile, name, dueDate, timezone, language });
+  const handleSave = async () => {
+    await onUpdate({ ...profile, name, dueDate, timezone, language });
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
   };
@@ -38,8 +38,8 @@ const Profile: React.FC<Props> = ({ profile, onUpdate }) => {
     setIsAuthLoading(true);
     try {
         const account = await mockGoogleLogin();
-        // Merge account but keep local settings
-        onUpdate({ ...profile, account });
+        // onUpdate handles the sync logic in App.tsx
+        await onUpdate({ ...profile, account });
     } catch (e) {
         console.error(e);
     } finally {
@@ -50,10 +50,10 @@ const Profile: React.FC<Props> = ({ profile, onUpdate }) => {
   const handleLogout = async () => {
     setIsAuthLoading(true);
     await mockLogout();
-    // Revert to guest
-    onUpdate({ 
+    // Revert to guest with unique timestamp to ensure clean slate
+    await onUpdate({ 
         ...profile, 
-        account: { id: 'guest_' + Date.now(), provider: 'guest' } 
+        account: { id: 'guest', provider: 'guest' } 
     });
     setIsAuthLoading(false);
   };
@@ -63,10 +63,18 @@ const Profile: React.FC<Props> = ({ profile, onUpdate }) => {
       
       {/* Account Card */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-rose-500" />
-              {t.account}
-          </h2>
+          <div className="flex justify-between items-start mb-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                  <User className="w-5 h-5 text-rose-500" />
+                  {t.account}
+              </h2>
+              {!isGuest && (
+                  <div className="flex items-center gap-1 text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-bold">
+                      <Cloud className="w-3 h-3" />
+                      {t.cloudBackup}
+                  </div>
+              )}
+          </div>
           
           <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -75,7 +83,10 @@ const Profile: React.FC<Props> = ({ profile, onUpdate }) => {
                           <User className="w-6 h-6" />
                       </div>
                   ) : (
-                      <img src={profile.account?.avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100" />
+                      <div className="relative">
+                          <img src={profile.account?.avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100" />
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                      </div>
                   )}
                   <div>
                       <p className="font-bold text-gray-700">
@@ -84,6 +95,7 @@ const Profile: React.FC<Props> = ({ profile, onUpdate }) => {
                       <p className="text-xs text-gray-500">
                           {isGuest ? t.guestBadge : profile.account?.email}
                       </p>
+                      {!isGuest && <p className="text-[10px] text-gray-400 mt-0.5">{t.lastSync}</p>}
                   </div>
               </div>
               
@@ -91,7 +103,7 @@ const Profile: React.FC<Props> = ({ profile, onUpdate }) => {
                   <button 
                     onClick={handleLogin}
                     disabled={isAuthLoading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-2 rounded-full font-bold transition flex items-center gap-1"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-2 rounded-full font-bold transition flex items-center gap-1 shadow-sm shadow-blue-200"
                   >
                       {isAuthLoading ? '...' : <LogIn className="w-3 h-3" />}
                       {t.syncNow}
@@ -109,7 +121,7 @@ const Profile: React.FC<Props> = ({ profile, onUpdate }) => {
           </div>
           
           {isGuest && (
-              <div className="mt-3 bg-blue-50 p-2 rounded-lg text-xs text-blue-700">
+              <div className="mt-4 bg-blue-50 p-3 rounded-xl text-xs text-blue-700 leading-relaxed">
                   {t.loginDesc}
               </div>
           )}

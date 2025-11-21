@@ -8,6 +8,7 @@ import Trends from './components/Trends';
 import WeeklyGuide from './components/WeeklyGuide';
 import Profile from './components/Profile';
 import { getWeeklyInsight, analyzeKickAnomaly } from './services/geminiService';
+import { storageService } from './services/storageService';
 import { differenceInCalendarDays } from 'date-fns';
 import { Home, Activity, TrendingUp, BookOpen, User } from 'lucide-react';
 
@@ -37,22 +38,60 @@ const App: React.FC = () => {
   const lang: Language = profile?.language || 'zh';
   const t = TRANSLATIONS[lang];
 
-  // --- Persistence ---
+  // --- Initialization ---
   useEffect(() => {
-    const savedProfile = localStorage.getItem('babykicks_profile');
-    const savedHistory = localStorage.getItem('babykicks_history');
-    if (savedProfile) setProfile(JSON.parse(savedProfile));
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
+    // Load Profile (Global)
+    const savedProfileStr = localStorage.getItem('babykicks_profile');
+    const initialProfile = savedProfileStr ? JSON.parse(savedProfileStr) : null;
+    
+    if (initialProfile) {
+      setProfile(initialProfile);
+      // Load History for the specific account in profile
+      const accId = initialProfile.account?.id || 'guest';
+      const savedHistory = storageService.loadHistory(accId);
+      setHistory(savedHistory);
+    }
+    
     setIsInitialized(true);
   }, []);
 
+  // --- Persistence: Profile ---
   useEffect(() => {
-    if (profile) localStorage.setItem('babykicks_profile', JSON.stringify(profile));
+    if (profile) {
+      localStorage.setItem('babykicks_profile', JSON.stringify(profile));
+    }
   }, [profile]);
 
+  // --- Persistence: History ---
   useEffect(() => {
-    localStorage.setItem('babykicks_history', JSON.stringify(history));
-  }, [history]);
+    if (!profile) return;
+    const accId = profile.account?.id || 'guest';
+    storageService.saveHistory(history, accId);
+  }, [history, profile]);
+
+
+  // --- Account Switching Logic ---
+  const handleProfileUpdate = async (newProfile: UserProfile) => {
+    const oldAccountId = profile?.account?.id || 'guest';
+    const newAccountId = newProfile.account?.id || 'guest';
+    
+    // If account ID changed (e.g. Guest -> Google or Google -> Guest)
+    if (oldAccountId !== newAccountId) {
+        if (newAccountId !== 'guest') {
+            // Case: Logging In (Guest -> Google)
+            // Sync/Merge current guest history into the new account
+            const mergedHistory = await storageService.syncHistory(history, newAccountId);
+            setHistory(mergedHistory);
+        } else {
+            // Case: Logging Out (Google -> Guest)
+            // Load default guest history (reverts to local data only)
+            const guestHistory = storageService.loadHistory('guest');
+            setHistory(guestHistory);
+        }
+    }
+    
+    setProfile(newProfile);
+  };
 
   // --- Date Logic ---
   const { weeks, days } = useMemo(() => {
@@ -150,7 +189,10 @@ const App: React.FC = () => {
       setCounterStatus('summary');
       const endTime = Date.now();
       const duration = Math.floor((endTime - (counterStartTime || endTime)) / 1000);
-      const sessionId = Date.now().toString() + Math.random().toString(36).substring(2);
+      
+      // Use fallback ID generation if crypto is not available
+      const randomPart = Math.random().toString(36).substring(2, 15);
+      const sessionId = Date.now().toString() + "_" + randomPart;
       
       const session: KickSession = {
           id: sessionId,
@@ -214,6 +256,11 @@ const App: React.FC = () => {
   // --- UI Handlers ---
   const handleOnboardingComplete = (newProfile: UserProfile) => {
     setProfile(newProfile);
+    // If user logged in during onboarding, try to load that account's history
+    if (newProfile.account) {
+        const accountHistory = storageService.loadHistory(newProfile.account.id);
+        setHistory(accountHistory);
+    }
   };
 
   if (!isInitialized) return null; 
@@ -270,7 +317,7 @@ const App: React.FC = () => {
             <div className={`h-full w-full overflow-y-auto custom-scrollbar ${activeTab === TabView.PROFILE ? 'block' : 'hidden'}`}>
               <Profile 
                 profile={profile}
-                onUpdate={setProfile}
+                onUpdate={handleProfileUpdate}
               />
             </div>
 
